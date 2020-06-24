@@ -9,7 +9,8 @@
     "express": "^4.16.4",
     "jquery": "^3.5.0",
     "open-iconic": "^1.1.1",
-    "popper.js": "^1.14.7"
+    "popper.js": "^1.14.7",
+    "request": "^2.88.2"
   },
   "devDependencies": {},
   "scripts": {

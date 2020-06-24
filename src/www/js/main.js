@@ -3,9 +3,6 @@ var playlistIndex = 0;
 
 var dirStack = [];
 
-var wakeLockEnabled = false;
-var noSleep = new NoSleep();
-
 var repeat = false;
 
 var audioCtx;
@@ -92,86 +89,7 @@ $(document).ready(function () {
 			return false;
 		}
 	});
-
-	// Web Audio API stuff
-	audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-	var myAudio = document.querySelector('audio.player');
-	var source = audioCtx.createMediaElementSource(myAudio);
-	analyser = audioCtx.createAnalyser();
-	analyser.fftSize = 2048;
-	bufferLength = analyser.frequencyBinCount;
-	dataArray = new Uint8Array(bufferLength);
-	source.connect(analyser);
-	analyser.connect(audioCtx.destination);
-	drawWaveform();
-	drawBuffered();
 });
-
-function drawWaveform() {
-	// draw at browser request/refresh rate
-	drawVisual = requestAnimationFrame(drawWaveform);
-
-	var canvas = document.querySelector('canvas.waveform');
-	var canvasCtx = canvas.getContext('2d');
-
-	// make internal width and height match css width and height
-	var canvasStyle = window.getComputedStyle(canvas);
-	canvas.width = canvasStyle.width.substring(0, canvasStyle.width.indexOf('px'));
-	canvas.height = canvasStyle.height.substring(0, canvasStyle.height.indexOf('px'));
-
-	// clear canvas
-	canvasCtx.fillStyle = window.getComputedStyle(document.body).backgroundColor;
-	canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-	// copy current audio frequency data into array
-	analyser.getByteTimeDomainData(dataArray);
-
-	// draw waveform
-	canvasCtx.lineWidth = 1;
-	canvasCtx.strokeStyle = window.getComputedStyle(document.body).color;
-	canvasCtx.beginPath();
-	var sliceWidth = canvas.width * 1.0 / bufferLength;
-	var x = 0;
-	for (var i = 0; i < bufferLength; i++) {
-		var v = dataArray[i] / 128.0;
-		var y = v * canvas.height / 2;
-		if (i === 0) {
-			canvasCtx.moveTo(x, y);
-		} else {
-			canvasCtx.lineTo(x, y);
-		}
-		x += sliceWidth;
-	}
-	canvasCtx.lineTo(canvas.width, canvas.height / 2);
-	canvasCtx.stroke();
-}
-
-function drawBuffered() {
-	// draw at browser request/refresh rate
-	drawVisual = requestAnimationFrame(drawBuffered);
-
-	var canvas = document.querySelector('canvas.buffered');
-	var canvasCtx = canvas.getContext('2d');
-
-	// make internal width and height match css width and height
-	var canvasStyle = window.getComputedStyle(canvas);
-	canvas.width = canvasStyle.width.substring(0, canvasStyle.width.indexOf('px'));
-	canvas.height = canvasStyle.height.substring(0, canvasStyle.height.indexOf('px'));
-
-	// clear canvas
-	canvasCtx.fillStyle = window.getComputedStyle(document.body).backgroundColor;
-	canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-	// draw buffered areas
-	var myAudio = $('audio.player')[0];
-	var inc = canvas.width / myAudio.duration;
-	for (i = 0; i < myAudio.buffered.length; i++) {
-		var startX = myAudio.buffered.start(i) * inc;
-		var endX = myAudio.buffered.end(i) * inc;
-		canvasCtx.fillStyle = window.getComputedStyle(document.body).color;
-		canvasCtx.fillRect(startX, 0, endX - startX, canvas.height);
-	}
-}
 
 function stringifyTime(time) {
 	var minutes = Math.floor(time / 60);
@@ -194,9 +112,10 @@ function upDir() {
 
 	dirStack.pop();
 	if (dirStack.length == 0) {
-		$.get('/dir?path=', function (data, status) {
+		$.get('/api/browser/roots' , function (data, status) {
 			if (status == 'success') {
-				handleDirContents(null, data);
+				console.log(JSON.stringify(data.roots));
+				handleDirContents(null, data.roots);
 				// hide loading message
 				$('.loading_message').hide();
 				$('.browser').show();
@@ -281,15 +200,6 @@ function handleDirContents(currentDir, dirEntries) {
 	$('.browser .track').click(function () {
 		// fix suspended AudioContext on Chrome
 		audioCtx.resume();
-		// try to prevent browser sleep
-		if (wakeLockEnabled == false) {
-			wakeLockEnabled = true;
-			// disable on desktop due to high CPU usage
-			if (screen.width < 768) {
-				noSleep.enable();
-				console.log("noSleep enabled");
-			}
-		}
 		var track = $(this).data('track');
 		//console.log('clicked track ' + JSON.stringify(track));
 		playlist = [];

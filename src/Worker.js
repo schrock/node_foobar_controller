@@ -2,6 +2,7 @@
 
 // 3rd party
 const express = require('express');
+const request = require('request');
 
 module.exports = class Worker {
 
@@ -34,6 +35,16 @@ module.exports = class Worker {
 		// routes
 		this.app.get('/hello', function (req, res) {
 			res.send('hello world!');
+		});
+		// proxy to beefweb API to get around CORS issues
+		this.app.all('/api/*', function (req, res) {
+			request({ url: 'http://192.168.1.22:8880' + req.path, method: req.method, json: req.body },
+				function (error, response, body) {
+					if (error) {
+						console.error('error: ' + response.statusCode)
+					}
+					// console.log(body);
+				}).pipe(res);
 		});
 		// serve client-side web app
 		this.app.use('/', express.static('src/www'));
