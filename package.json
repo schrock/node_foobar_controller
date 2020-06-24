@@ -1,0 +1,30 @@
+{
+  "name": "node_foobar_controller",
+  "version": "1.0.0",
+  "description": "Node.js server and web app for controlling a Foobar2000 instance",
+  "main": "server.js",
+  "dependencies": {
+    "bootstrap": "4.3.1",
+    "bootswatch": "4.3.1",
+    "express": "^4.16.4",
+    "jquery": "^3.5.0",
+    "nconf": "^0.10.0",
+    "open-iconic": "^1.1.1",
+    "popper.js": "^1.14.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/schrock/node_foobar_controller.git"
+  },
+  "author": "Mitchell Schrock",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/schrock/node_foobar_controller/issues"
+  },
+  "homepage": "https://github.com/schrock/node_foobar_controller#readme"
+}
