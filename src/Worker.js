@@ -38,7 +38,9 @@ module.exports = class Worker {
 		});
 		// proxy to beefweb API to get around CORS issues
 		this.app.all('/api/*', function (req, res) {
-			request({ url: 'http://192.168.1.22:8880' + req.path, method: req.method, json: req.body },
+			var url = 'http://192.168.1.22:8880' + req.originalUrl;
+			console.log('proxy call to ' + url);
+			request({ url: url, method: req.method, json: req.body },
 				function (error, response, body) {
 					if (error) {
 						console.error('error: ' + response.statusCode)

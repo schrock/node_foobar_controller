@@ -112,7 +112,7 @@ function upDir() {
 
 	dirStack.pop();
 	if (dirStack.length == 0) {
-		$.get('/api/browser/roots' , function (data, status) {
+		$.get('/api/browser/roots', function (data, status) {
 			if (status == 'success') {
 				console.log(JSON.stringify(data.roots));
 				handleDirContents(null, data.roots);
@@ -123,9 +123,9 @@ function upDir() {
 		});
 	} else {
 		var dir = dirStack[dirStack.length - 1];
-		$.get(dir.dirUrl, function (data, status) {
+		$.get('/api/browser/entries?path=' + dir.path, function (data, status) {
 			if (status == 'success') {
-				handleDirContents(dir, data);
+				handleDirContents(dir, data.entries);
 				// hide loading message
 				$('.loading_message').hide();
 				$('.browser').show();
@@ -138,9 +138,9 @@ function handleDirContents(currentDir, dirEntries) {
 	var dirs = [];
 	var files = [];
 	for (var dirEntry of dirEntries) {
-		if (dirEntry.type == 'dir') {
+		if (dirEntry.type == 'D') {
 			dirs.push(dirEntry);
-		} else if (dirEntry.type == 'file') {
+		} else if (dirEntry.type == 'F') {
 			files.push(dirEntry);
 		}
 	}
@@ -171,10 +171,10 @@ function handleDirContents(currentDir, dirEntries) {
 		// show loading message
 		$('.browser').hide();
 		$('.loading_message').show();
-		$.get(dir.dirUrl, function (data, status) {
+		$.get('/api/browser/entries?path=' + dir.path, function (data, status) {
 			if (status == 'success') {
 				dirStack.push(dir);
-				handleDirContents(dir, data);
+				handleDirContents(dir, data.entries);
 				// hide loading message
 				$('.loading_message').hide();
 				$('.browser').show();
@@ -183,6 +183,14 @@ function handleDirContents(currentDir, dirEntries) {
 		return false;
 	});
 
+	// place files after dirs in browser
+	for (var file of files) {
+		$('.browser').append('<div class="row border-top file"></div>');
+		$('.browser .file').last().append('<div class="col-12 no-overflow no-gutters"><span class="oi oi-file"></span>&nbsp;&nbsp;&nbsp;' + file.name + '</div>');
+		$('.browser .file').last().data('file', file);
+	}
+
+	/*
 	// place files after dirs in browser
 	for (var file of files) {
 		for (var track of file.tracks) {
@@ -214,6 +222,7 @@ function handleDirContents(currentDir, dirEntries) {
 		audioPlay();
 		return false;
 	});
+	*/
 }
 
 function revealElement(element) {
