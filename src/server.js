@@ -1,17 +1,30 @@
 'use strict';
 
+// configuration
+const nconf = require('nconf');
+nconf.argv().env().file('./config.local.json');
+nconf.defaults({
+	"port": 8881,
+	"beefwebHost": "localhost",
+	"beefwebPort": 8880
+});
+
 // 3rd party
 const cluster = require('cluster');
 const os = require('os');
 const express = require('express');
 const http = require('http');
-const https = require('https');
 const fs = require('fs');
 
 // classes
 const Worker = require('./Worker.js');
 
 if (cluster.isMaster) {
+	console.log('port: ' + JSON.stringify(nconf.get('port'), null, 4));
+	console.log('beefwebHost: ' + JSON.stringify(nconf.get('beefwebHost'), null, 4));
+	console.log('beefwebPort: ' + JSON.stringify(nconf.get('beefwebPort'), null, 4));
+	console.log('extensions: ' + JSON.stringify(nconf.get('extensions'), null, 4));
+
 	var numCPUs = os.cpus().length;
 	for (var i = 0; i < numCPUs; i++) {
 		// Create a worker
@@ -24,8 +37,8 @@ if (cluster.isMaster) {
 	});
 } else {
 	// setup server
-	var worker = new Worker();
-	var port = 8881;
+	var worker = new Worker(nconf);
+	var port = nconf.get('port');
 	var server = http.createServer(worker.getApp());
 	server.listen(port, function () {
 		console.log('worker running on port ' + port + '...');

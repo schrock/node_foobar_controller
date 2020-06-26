@@ -6,8 +6,11 @@ const request = require('request');
 
 module.exports = class Worker {
 
-	constructor() {
+	constructor(nconf) {
 		this.app = express();
+
+		// enable parsing of json bodies
+		this.app.use(express.json());
 
 		this.app.use(function (req, res, next) {
 			res.header("Cache-Control", "no-store, no-cache");
@@ -38,8 +41,9 @@ module.exports = class Worker {
 		});
 		// proxy to beefweb API to get around CORS issues
 		this.app.all('/api/*', function (req, res) {
-			var url = 'http://192.168.1.22:8880' + req.originalUrl;
-			console.log('proxy call to ' + url);
+			var url = 'http://' + nconf.get('beefwebHost') + ':' + nconf.get('beefwebPort') + req.originalUrl;
+			console.log('proxy call: ' + req.method + ' ' + url);
+			// console.log('body: ' + req.body);
 			request({ url: url, method: req.method, json: req.body },
 				function (error, response, body) {
 					if (error) {

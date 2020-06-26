@@ -1,3 +1,5 @@
+var extensions = ["mp3", "m4a", "flac", "ogg", "ay", "gbs", "gym", "hes", "kss", "nsf", "nsfe", "psf", "minipsf", "psf2", "sap", "spc", "usf", "miniusf", "vgm"];
+
 var playlist = [];
 var playlistIndex = 0;
 
@@ -81,12 +83,6 @@ $(document).ready(function () {
 		} else if (key == 'b') {
 			audioNext();
 			return false;
-		} else if (key == 'ArrowLeft') {
-			audioSeekBackwards(5);
-			return false;
-		} else if (key == 'ArrowRight') {
-			audioSeekForwards(5);
-			return false;
 		}
 	});
 });
@@ -141,7 +137,14 @@ function handleDirContents(currentDir, dirEntries) {
 		if (dirEntry.type == 'D') {
 			dirs.push(dirEntry);
 		} else if (dirEntry.type == 'F') {
-			files.push(dirEntry);
+			var fileName = dirEntry.name;
+			var extIndex = fileName.lastIndexOf('.');
+			if (extIndex > 0) {
+				var ext = fileName.substring(extIndex + 1);
+				if (extensions.indexOf(ext) > -1) {
+					files.push(dirEntry);
+				}
+			}
 		}
 	}
 
@@ -189,6 +192,43 @@ function handleDirContents(currentDir, dirEntries) {
 		$('.browser .file').last().append('<div class="col-12 no-overflow no-gutters"><span class="oi oi-file"></span>&nbsp;&nbsp;&nbsp;' + file.name + '</div>');
 		$('.browser .file').last().data('file', file);
 	}
+	$('.browser .file').click(function () {
+		// stop playback
+		$.post('/api/player/stop').then(function (data, status) {
+			// clear playlist
+			return $.post('/api/playlists/0/clear');
+		}).then(function (data, status) {
+			// add current files to playlist
+			var items = [];
+			$('.browser .file').each(function (index) {
+				var file = $(this).data('file');
+				items.push(file.path);
+			});
+			var itemsObject = { items: items };
+			return $.ajax({ url: '/api/playlists/0/items/add', type: 'POST', data: JSON.stringify(itemsObject), contentType: 'application/json' });
+		}).then(function (data, status) {
+			return $.get('/api/playlists/0/items/0:10000?columns=%discnumber%,%tracknumber%,%title%,%artist%,%length%');
+		}).then(function (data, status) {
+			console.log(JSON.stringify(data));
+			$('.browser').empty();
+			for (var item of data.playlistItems.items) {
+				var track = {};
+				track.number = item.columns[1];
+				if (item.columns[0] !== '?') {
+					track.number = item.columns[0] + '.' + track.number;
+				}
+				track.title = item.columns[2];
+				track.artist = item.columns[3];
+				track.length = item.columns[4];
+				$('.browser').append('<div class="row border-top track"></div>');
+				$('.browser .track').last().append('<div class="col-12 col-md-8 no-overflow no-gutters">' + track.number + '&nbsp;&nbsp;&nbsp;' + track.title + '</div>');
+				$('.browser .track').last().append('<div class="col-3 d-none d-md-block no-overflow">' + track.artist + '</div>');
+				$('.browser .track').last().append('<div class="col-1 d-none d-md-block text-right">' + track.length + '</div>');
+				$('.browser .track').last().data('track', track);
+			}
+			return;
+		}).fail(console.log.bind(console));
+	});
 
 	/*
 	// place files after dirs in browser
@@ -234,77 +274,48 @@ function revealElement(element) {
 }
 
 function audioStop() {
-	$('audio.player').get(0).pause();
-	$('audio.player').get(0).currentTime = 0;
-	$('div.progress-bar').width('0%');
+	$.post('/api/player/stop').then(function (data, status) {
+		$('div.progress-bar').width('0%');
+		return;
+	});
 }
 
 function audioPlay() {
-	audioStop();
-	var track = playlist[playlistIndex];
-	// highlight in playlist
-	$('.browser .track').removeClass('bg-primary');
-	$('.browser .track').each(function () {
-		var t = $(this).data('track');
-		if (track === t) {
-			$(this).addClass('bg-primary');
-			revealElement($(this)[0]);
-		}
+	$.post('/api/player/play').then(function (data, status) {
+		return;
 	});
-	// change current song information labels
-	document.title = track.title;
-	$('.currentSong').html(track.title);
-	$('.currentArtist').html(track.artist);
-	// load song
-	$('audio.player').empty();
-	$('audio.player').append('<source src="' + track.playUrl + '" type="audio/mpeg" />');
-	$('audio.player').get(0).load();
-	// start playback
-	$('audio.player').get(0).play();
+	// var track = playlist[playlistIndex];
+	// // highlight in playlist
+	// $('.browser .track').removeClass('bg-primary');
+	// $('.browser .track').each(function () {
+	// 	var t = $(this).data('track');
+	// 	if (track === t) {
+	// 		$(this).addClass('bg-primary');
+	// 		revealElement($(this)[0]);
+	// 	}
+	// });
+	// // change current song information labels
+	// document.title = track.title;
+	// $('.currentSong').html(track.title);
+	// $('.currentArtist').html(track.artist);
 }
 
 function audioPause() {
-	if ($('audio.player').get(0).paused) {
-		$('audio.player').get(0).play();
-	} else {
-		$('audio.player').get(0).pause();
-	}
-}
-
-function audioSeekBackwards(seconds) {
-	if (!$('audio.player').get(0).paused) {
-		$('audio.player').get(0).currentTime -= seconds;
-	}
-}
-
-function audioSeekForwards(seconds) {
-	if (!$('audio.player').get(0).paused) {
-		$('audio.player').get(0).currentTime += seconds;
-	}
+	$.post('/api/player/pause/toggle').then(function (data, status) {
+		return;
+	});
 }
 
 function audioPrevious() {
-	audioStop();
-	if (playlist.length == 0) {
+	$.post('/api/player/previous').then(function (data, status) {
 		return;
-	}
-	playlistIndex--;
-	if (playlistIndex < 0) {
-		playlistIndex = playlist.length - 1;
-	}
-	audioPlay();
+	});
 }
 
 function audioNext() {
-	audioStop();
-	if (playlist.length == 0) {
+	$.post('/api/player/next').then(function (data, status) {
 		return;
-	}
-	playlistIndex++;
-	if (playlistIndex > (playlist.length - 1)) {
-		playlistIndex = 0;
-	}
-	audioPlay();
+	});
 }
 
 function audioRepeat() {
