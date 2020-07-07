@@ -42,7 +42,7 @@ module.exports = class Worker {
 		// proxy to beefweb API to get around CORS issues
 		this.app.all('/api/*', function (req, res) {
 			var url = 'http://' + nconf.get('beefwebHost') + ':' + nconf.get('beefwebPort') + req.originalUrl;
-			console.log('proxy call: ' + req.method + ' ' + url);
+			// console.log('proxy call: ' + req.method + ' ' + url);
 			// console.log('body: ' + req.body);
 			request({ url: url, method: req.method, json: req.body },
 				function (error, response, body) {

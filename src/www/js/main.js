@@ -1,42 +1,29 @@
-var extensions = ["mp3", "m4a", "flac", "ogg", "ay", "gbs", "gym", "hes", "kss", "nsf", "nsfe", "psf", "minipsf", "psf2", "sap", "spc", "usf", "miniusf", "vgm"];
+var extensions = [
+	"aac", "ay", "flac", "gbs", "gym", "hes", "kss", "mp3", "m4a",
+	"minipsf", "miniusf", "nsf", "nsfe", "ogg", "psf", "psf2",
+	"sap", "spc", "usf", "vgm"];
 
-var playlist = [];
-var playlistIndex = 0;
+var playlistMode = false;
+
+var state = {};
 
 var dirStack = [];
 
 var repeat = false;
 
-var audioCtx;
-var analyser;
-var bufferLength;
-var dataArray;
-
 $(document).ready(function () {
 	// get root browser contents
 	upDir();
-	// hookup progress bar
-	$('audio.player').on('timeupdate', function () {
-		var currentTime = $('audio.player').get(0).currentTime;
-		//var duration = $('audio.player').get(0).duration;
-		var track = playlist[playlistIndex];
-		var duration = track.duration;
-		$('div.progress-bar').width(currentTime / duration * 100 + '%');
-		// update time display
-		$('div.progress-bar').html('<div>' + stringifyTime(currentTime) + '</div>');
-		$('.currentTime').html(stringifyTime(currentTime) + '&nbsp;/&nbsp;' + stringifyTime(duration));
-		$('.currentInfo').html(playlist[playlistIndex].replaygainAlbum + '&nbsp;' + playlist[playlistIndex].format);
-	});
 	$('div.progress').click(function (e) {
-		//var duration = $('audio.player').get(0).duration;
-		var track = playlist[playlistIndex];
-		var duration = track.duration;
+		var duration = state.player.activeItem.duration;
 		if (duration > 0) {
 			var selectedX = e.pageX - $(this).offset().left;
 			var maxX = $(this).width();
 			var targetTimeFraction = selectedX / maxX;
 			var targetTime = duration * targetTimeFraction;
-			$('audio.player').get(0).currentTime = targetTime;
+			$.post('/api/player?position=' + targetTime).then(function (data, status) {
+				return;
+			});
 		}
 		return false;
 	});
@@ -85,6 +72,8 @@ $(document).ready(function () {
 			return false;
 		}
 	});
+
+	window.setInterval(updateState, 1000);
 });
 
 function stringifyTime(time) {
@@ -110,7 +99,7 @@ function upDir() {
 	if (dirStack.length == 0) {
 		$.get('/api/browser/roots', function (data, status) {
 			if (status == 'success') {
-				console.log(JSON.stringify(data.roots));
+				// console.log(JSON.stringify(data.roots));
 				handleDirContents(null, data.roots);
 				// hide loading message
 				$('.loading_message').hide();
@@ -131,6 +120,8 @@ function upDir() {
 }
 
 function handleDirContents(currentDir, dirEntries) {
+	playlistMode = false;
+
 	var dirs = [];
 	var files = [];
 	for (var dirEntry of dirEntries) {
@@ -193,6 +184,7 @@ function handleDirContents(currentDir, dirEntries) {
 		$('.browser .file').last().data('file', file);
 	}
 	$('.browser .file').click(function () {
+		var fileIndex = $(this).index();
 		// stop playback
 		$.post('/api/player/stop').then(function (data, status) {
 			// clear playlist
@@ -207,25 +199,9 @@ function handleDirContents(currentDir, dirEntries) {
 			var itemsObject = { items: items };
 			return $.ajax({ url: '/api/playlists/0/items/add', type: 'POST', data: JSON.stringify(itemsObject), contentType: 'application/json' });
 		}).then(function (data, status) {
-			return $.get('/api/playlists/0/items/0:10000?columns=%discnumber%,%tracknumber%,%title%,%artist%,%length%');
+			return $.post('/api/player/play/0/' + fileIndex);
 		}).then(function (data, status) {
-			console.log(JSON.stringify(data));
-			$('.browser').empty();
-			for (var item of data.playlistItems.items) {
-				var track = {};
-				track.number = item.columns[1];
-				if (item.columns[0] !== '?') {
-					track.number = item.columns[0] + '.' + track.number;
-				}
-				track.title = item.columns[2];
-				track.artist = item.columns[3];
-				track.length = item.columns[4];
-				$('.browser').append('<div class="row border-top track"></div>');
-				$('.browser .track').last().append('<div class="col-12 col-md-8 no-overflow no-gutters">' + track.number + '&nbsp;&nbsp;&nbsp;' + track.title + '</div>');
-				$('.browser .track').last().append('<div class="col-3 d-none d-md-block no-overflow">' + track.artist + '</div>');
-				$('.browser .track').last().append('<div class="col-1 d-none d-md-block text-right">' + track.length + '</div>');
-				$('.browser .track').last().data('track', track);
-			}
+			playlistMode = true;
 			return;
 		}).fail(console.log.bind(console));
 	});
@@ -265,6 +241,70 @@ function handleDirContents(currentDir, dirEntries) {
 	*/
 }
 
+function updateState() {
+	$.get('/api/query?player=true&playlistItems=true&plref=0&plrange=0:10000&plcolumns=%discnumber%,%tracknumber%,%title%,%artist%,%length%').then(function (data, status) {
+		state = data;
+		// console.log(JSON.stringify(data));
+		if (playlistMode) {
+			$('.browser').empty();
+			for (var item of state.playlistItems.items) {
+				var track = {};
+				track.number = item.columns[1];
+				if (item.columns[0] !== '?') {
+					track.number = item.columns[0] + '.' + track.number;
+				}
+				track.title = item.columns[2];
+				track.artist = item.columns[3];
+				track.length = item.columns[4];
+				$('.browser').append('<div class="row border-top track"></div>');
+				$('.browser .track').last().append('<div class="col-12 col-md-8 no-overflow no-gutters">' + track.number + '&nbsp;&nbsp;&nbsp;' + track.title + '</div>');
+				$('.browser .track').last().append('<div class="col-3 d-none d-md-block no-overflow">' + track.artist + '</div>');
+				$('.browser .track').last().append('<div class="col-1 d-none d-md-block text-right">' + track.length + '</div>');
+				$('.browser .track').last().data('track', track);
+			}
+			// highlight currently playing in playlist
+			$('.browser .track').removeClass('bg-primary');
+			var trackIndex = state.player.activeItem.index;
+			if (trackIndex >= 0) {
+				$('.browser .track').eq(trackIndex).addClass('bg-primary');
+			}
+			// play track when clicked
+			$('.browser .track').click(function () {
+				var clickedIndex = $(this).index();
+				$.post('/api/player/play/0/' + clickedIndex).then(function (data, status) {
+					return;
+				});
+			});
+		}
+		// update currently playing
+		var trackIndex = state.player.activeItem.index;
+		if (trackIndex >= 0) {
+			$('.currentSong').html(state.playlistItems.items[trackIndex].columns[2]);
+			$('.currentArtist').html(state.playlistItems.items[trackIndex].columns[3]);
+		} else {
+			$('.currentSong').html('');
+			$('.currentArtist').html('');
+		}
+		// update progress bar, time
+		var currentTime = state.player.activeItem.position;
+		var duration = state.player.activeItem.duration;
+		if (duration === 0) {
+			$('div.progress-bar').width('0%');
+		} else {
+			$('div.progress-bar').width(currentTime / duration * 100 + '%');
+		}
+		$('div.progress-bar').html('<div>' + stringifyTime(currentTime) + '</div>');
+		$('.currentTime').html(stringifyTime(currentTime) + '&nbsp;/&nbsp;' + stringifyTime(duration));
+		// update progress bar animation
+		if (state.player.playbackState === "playing") {
+			$('div.progress-bar').addClass('progress-bar-animated');
+		} else {
+			$('div.progress-bar').removeClass('progress-bar-animated');
+		}
+		return;
+	});
+}
+
 function revealElement(element) {
 	var headerRect = $('div.sticky-top')[0].getBoundingClientRect();
 	var elementRect = element.getBoundingClientRect();
@@ -275,45 +315,37 @@ function revealElement(element) {
 
 function audioStop() {
 	$.post('/api/player/stop').then(function (data, status) {
-		$('div.progress-bar').width('0%');
+		updateState();
 		return;
 	});
 }
 
 function audioPlay() {
-	$.post('/api/player/play').then(function (data, status) {
+	$.post('/api/player/stop').then(function (data, status) {
+		return $.post('/api/player/play');
+	}).then(function (data, status) {
+		updateState();
 		return;
 	});
-	// var track = playlist[playlistIndex];
-	// // highlight in playlist
-	// $('.browser .track').removeClass('bg-primary');
-	// $('.browser .track').each(function () {
-	// 	var t = $(this).data('track');
-	// 	if (track === t) {
-	// 		$(this).addClass('bg-primary');
-	// 		revealElement($(this)[0]);
-	// 	}
-	// });
-	// // change current song information labels
-	// document.title = track.title;
-	// $('.currentSong').html(track.title);
-	// $('.currentArtist').html(track.artist);
 }
 
 function audioPause() {
 	$.post('/api/player/pause/toggle').then(function (data, status) {
+		updateState();
 		return;
 	});
 }
 
 function audioPrevious() {
 	$.post('/api/player/previous').then(function (data, status) {
+		updateState();
 		return;
 	});
 }
 
 function audioNext() {
 	$.post('/api/player/next').then(function (data, status) {
+		updateState();
 		return;
 	});
 }
