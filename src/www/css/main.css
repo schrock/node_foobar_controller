@@ -1,0 +1,60 @@
+body {
+	font-size: 1.5rem;
+	cursor: default;
+	overflow-y: scroll;
+}
+
+@media (min-width: 768px) {
+	body {
+		font-size: 1rem;
+	}
+}
+
+button {
+	width: 100%;
+}
+
+.progress {
+	cursor: pointer;
+	height: 25px;
+}
+
+.progress > .progress-bar {
+	width: 0%;
+	height: 100%;
+}
+
+.loading_message {
+	display: none;
+}
+
+.dir {
+	cursor: pointer;
+}
+
+.track {
+	cursor: pointer;
+}
+
+canvas.waveform {
+	height: 20px;
+	width: 100%;
+}
+
+canvas.buffered {
+	height: 2px;
+	width: 100%;
+}
+
+.no-overflow {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.no-gutters {
+	margin-right: 0;
+	margin-left: 0;
+	padding-right: 0;
+	padding-left: 0;
+}

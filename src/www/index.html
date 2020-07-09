@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<title>node_music_streamer</title>
+	<link rel="shortcut icon" type="image/png" href="icon/favicon.png">
+	<link rel="stylesheet" type="text/css" href="node_modules/bootswatch/dist/darkly/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="node_modules/open-iconic/font/css/open-iconic-bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/main.css">
+</head>
+
+<body>
+
+	<div class="container-fluid">
+
+		<div class="row sticky-top bg-light">
+
+			<div class="col-12">
+				<div class="row">
+					<div class="col-12 no-gutters progress">
+						<div class="progress-bar progress-bar-info progress-bar-striped"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-12">
+				<div class="row">
+					<div class="col-12 col-md-5 text-center no-overflow no-gutters currentSong">&nbsp;</div>
+					<div class="col-7 col-md-5 text-center no-overflow no-gutters currentArtist">&nbsp;</div>
+					<div class="col-5 col-md-2 text-center no-overflow no-gutters currentTime">&nbsp;</div>
+				</div>
+			</div>
+
+			<div class="col-12">
+				<div class="row justify-content-center">
+					<div class="col-4 col-md-1 no-gutters">
+						<button class="btn btn-primary shadow-none rounded-pill previous"><span class="oi oi-media-step-backward"></span></button>
+					</div>
+					<div class="col-0 col-md-1 d-none d-md-block no-gutters">
+						<button class="btn btn-primary shadow-none rounded-pill play"><span class="oi oi-media-play"></span></button>
+					</div>
+					<div class="col-4 col-md-1 no-gutters">
+						<button class="btn btn-primary shadow-none rounded-pill pause"><span class="oi oi-media-pause"></span></button>
+					</div>
+					<div class="col-0 col-md-1 d-none d-md-block no-gutters">
+						<button class="btn btn-primary shadow-none rounded-pill stop"><span class="oi oi-media-stop"></span></button>
+					</div>
+					<div class="col-4 col-md-1 no-gutters">
+						<button class="btn btn-primary shadow-none rounded-pill next"><span class="oi oi-media-step-forward"></span></button>
+					</div>
+					<div class="col-0 col-md-1 d-none d-md-block no-gutters">
+						<button class="btn btn-primary shadow-none rounded-pill repeat"><span class="oi oi-loop-square"></span></button>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-12 pt-2 pb-2">
+				<div class="row">
+					<div class="col-2 col-md-1 no-gutters">
+						<button class="btn btn-primary shadow-none upDir"><span class="oi oi-arrow-thick-top"></span></button>
+					</div>
+					<div class="col no-overflow currentDir">&nbsp;</div>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="row">
+			<div class="col-12 browser"></div>
+		</div>
+
+		<div class="row">
+			<div class="col-12 loading_message alert alert-info">Loading contents...</div>
+		</div>
+
+	</div>
+
+	<script src="node_modules/jquery/dist/jquery.min.js"></script>
+	<script src="node_modules/popper.js/dist/umd/popper.min.js"></script>
+	<script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script src="js/main.js"></script>
+</body>
+
+</html>
