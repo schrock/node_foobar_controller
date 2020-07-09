@@ -9,8 +9,6 @@ var state = {};
 
 var dirStack = [];
 
-var repeat = false;
-
 $(document).ready(function () {
 	// get root browser contents
 	upDir();
@@ -27,23 +25,6 @@ $(document).ready(function () {
 		}
 		return false;
 	});
-	// automatic track change at end of current song
-	$('audio.player').on('ended', function () {
-		if (repeat) {
-			audioPlay();
-		} else {
-			audioNext();
-		}
-	});
-	$('audio.player').on('play playing', function () {
-		$('button.pause').html('<span class="oi oi-media-pause"></span>');
-		$('div.progress-bar').addClass('progress-bar-animated');
-	});
-	$('audio.player').on('pause', function () {
-		$('button.pause').html('<span class="oi oi-media-play"></span>');
-		$('div.progress-bar').removeClass('progress-bar-animated');
-	});
-
 	// hookup audio player buttons
 	$('button.upDir').click(upDir);
 	$('button.previous').click(audioPrevious);
@@ -72,7 +53,7 @@ $(document).ready(function () {
 			return false;
 		}
 	});
-
+	// update player state every second
 	window.setInterval(updateState, 1000);
 });
 
@@ -205,46 +186,12 @@ function handleDirContents(currentDir, dirEntries) {
 			return;
 		}).fail(console.log.bind(console));
 	});
-
-	/*
-	// place files after dirs in browser
-	for (var file of files) {
-		for (var track of file.tracks) {
-			var trackNumber = track.track + '';
-			if (trackNumber.length == 1) {
-				trackNumber = '0' + trackNumber;
-			}
-			$('.browser').append('<div class="row border-top track"></div>');
-			$('.browser .track').last().append('<div class="col-12 col-md-8 no-overflow no-gutters">' + trackNumber + '&nbsp;&nbsp;&nbsp;' + track.title + '</div>');
-			$('.browser .track').last().append('<div class="col-3 d-none d-md-block no-overflow">' + track.artist + '</div>');
-			$('.browser .track').last().append('<div class="col-1 d-none d-md-block text-right">' + stringifyTime(track.duration) + '</div>');
-			$('.browser .track').last().data('track', track);
-		}
-	}
-	$('.browser .track').click(function () {
-		// fix suspended AudioContext on Chrome
-		audioCtx.resume();
-		var track = $(this).data('track');
-		//console.log('clicked track ' + JSON.stringify(track));
-		playlist = [];
-		playlistIndex = 0;
-		$('.browser .track').each(function (index) {
-			var t = $(this).data('track');
-			playlist.push(t);
-			if (track === t) {
-				playlistIndex = index;
-			}
-		});
-		audioPlay();
-		return false;
-	});
-	*/
 }
 
 function updateState() {
 	$.get('/api/query?player=true&playlistItems=true&plref=0&plrange=0:10000&plcolumns=%discnumber%,%tracknumber%,%title%,%artist%,%length%').then(function (data, status) {
 		state = data;
-		// console.log(JSON.stringify(data));
+		// console.log(JSON.stringify(state));
 		if (playlistMode) {
 			$('.browser').empty();
 			for (var item of state.playlistItems.items) {
@@ -301,6 +248,14 @@ function updateState() {
 		} else {
 			$('div.progress-bar').removeClass('progress-bar-animated');
 		}
+		// handle repeat (playback mode)
+		var playbackMode = state.player.playbackModes[state.player.playbackMode];
+		if (playbackMode === 'Repeat (track)') {
+			$('button.repeat').css('filter', 'invert(100%)');
+		} else {
+			$('button.repeat').css('filter', 'invert(0%)');
+		}
+
 		return;
 	});
 }
@@ -351,13 +306,16 @@ function audioNext() {
 }
 
 function audioRepeat() {
-	if (repeat) {
-		repeat = false;
-		//$('button.repeat').removeClass('active');
-		$('button.repeat').css('filter', 'invert(0%)');
-	} else {
-		repeat = true;
-		//$('button.repeat').addClass('active');
-		$('button.repeat').css('filter', 'invert(100%)');
+	var playbackModeIndex;
+	var playbackMode = state.player.playbackModes[state.player.playbackMode];
+	if (playbackMode === 'Repeat (track)') {
+		playbackModeIndex = state.player.playbackModes.indexOf('Repeat (playlist)')
 	}
+	else {
+		playbackModeIndex = state.player.playbackModes.indexOf('Repeat (track)')
+	}
+	$.post('/api/player?playbackMode=' + playbackModeIndex).then(function (data, status) {
+		updateState();
+		return;
+	});
 }
