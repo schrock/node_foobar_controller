@@ -248,7 +248,7 @@ function updateState() {
 		} else {
 			$('div.progress-bar').removeClass('progress-bar-animated');
 		}
-		// handle repeat (playback mode)
+		// update repeat button (playback mode)
 		var playbackMode = state.player.playbackModes[state.player.playbackMode];
 		if (playbackMode === 'Repeat (track)') {
 			$('button.repeat').css('filter', 'invert(100%)');
