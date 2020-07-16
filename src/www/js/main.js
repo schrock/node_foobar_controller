@@ -3,6 +3,8 @@ var extensions = [
 	"minipsf", "miniusf", "nsf", "nsfe", "ogg", "psf", "psf2",
 	"sap", "spc", "usf", "vgm"];
 
+var lastCurrentDir = null;
+var lastDirEntries = null;
 var playlistMode = false;
 
 var state = {};
@@ -27,6 +29,7 @@ $(document).ready(function () {
 	});
 	// hookup audio player buttons
 	$('button.upDir').click(upDir);
+	$('button.togglePlaylistMode').click(togglePlaylistMode);
 	$('button.previous').click(audioPrevious);
 	$('button.play').click(audioPlay);
 	$('button.pause').click(audioPause);
@@ -101,8 +104,13 @@ function upDir() {
 }
 
 function handleDirContents(currentDir, dirEntries) {
+	lastCurrentDir = currentDir;
+	lastDirEntries = dirEntries;
 	playlistMode = false;
 
+	dirEntries.sort(function (a, b) {
+		return a.name.localeCompare(b.name);
+	});
 	var dirs = [];
 	var files = [];
 	for (var dirEntry of dirEntries) {
@@ -229,8 +237,8 @@ function updateState() {
 			$('.currentSong').html(state.playlistItems.items[trackIndex].columns[2]);
 			$('.currentArtist').html(state.playlistItems.items[trackIndex].columns[3]);
 		} else {
-			$('.currentSong').html('');
-			$('.currentArtist').html('');
+			$('.currentSong').html('&nbsp;');
+			$('.currentArtist').html('&nbsp;');
 		}
 		// update progress bar, time
 		var currentTime = state.player.activeItem.position;
@@ -248,7 +256,7 @@ function updateState() {
 		} else {
 			$('div.progress-bar').removeClass('progress-bar-animated');
 		}
-		// handle repeat (playback mode)
+		// update repeat button (playback mode)
 		var playbackMode = state.player.playbackModes[state.player.playbackMode];
 		if (playbackMode === 'Repeat (track)') {
 			$('button.repeat').css('filter', 'invert(100%)');
@@ -266,6 +274,16 @@ function revealElement(element) {
 	if (elementRect.top < headerRect.bottom || elementRect.bottom > window.innerHeight) {
 		element.scrollIntoView(false);
 	}
+}
+
+function togglePlaylistMode() {
+	playlistMode = !playlistMode;
+	if (playlistMode) {
+		updateState();
+	} else {
+		handleDirContents(lastCurrentDir, lastDirEntries);
+	}
+	return;
 }
 
 function audioStop() {
