@@ -103,6 +103,9 @@ function upDir() {
 function handleDirContents(currentDir, dirEntries) {
 	playlistMode = false;
 
+	dirEntries.sort(function (a, b) {
+		return a.name.localeCompare(b.name);
+	});
 	var dirs = [];
 	var files = [];
 	for (var dirEntry of dirEntries) {
