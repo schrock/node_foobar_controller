@@ -92,7 +92,7 @@ function upDir() {
 		});
 	} else {
 		var dir = dirStack[dirStack.length - 1];
-		$.get('/api/browser/entries?path=' + dir.path, function (data, status) {
+		$.get('/api/browser/entries?path=' + encodeURIComponent(dir.path), function (data, status) {
 			if (status == 'success') {
 				handleDirContents(dir, data.entries);
 				// hide loading message
@@ -154,7 +154,7 @@ function handleDirContents(currentDir, dirEntries) {
 		// show loading message
 		$('.browser').hide();
 		$('.loading_message').show();
-		$.get('/api/browser/entries?path=' + dir.path, function (data, status) {
+		$.get('/api/browser/entries?path=' + encodeURIComponent(dir.path), function (data, status) {
 			if (status == 'success') {
 				dirStack.push(dir);
 				handleDirContents(dir, data.entries);
