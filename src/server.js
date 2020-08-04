@@ -23,7 +23,6 @@ if (cluster.isMaster) {
 	console.log('port: ' + JSON.stringify(nconf.get('port'), null, 4));
 	console.log('beefwebHost: ' + JSON.stringify(nconf.get('beefwebHost'), null, 4));
 	console.log('beefwebPort: ' + JSON.stringify(nconf.get('beefwebPort'), null, 4));
-	console.log('extensions: ' + JSON.stringify(nconf.get('extensions'), null, 4));
 
 	var numCPUs = os.cpus().length;
 	for (var i = 0; i < numCPUs; i++) {
