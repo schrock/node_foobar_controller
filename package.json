@@ -8,7 +8,7 @@
     "bootswatch": "4.3.1",
     "express": "^4.16.4",
     "jquery": "^3.5.0",
-    "nconf": "^0.10.0",
+    "nconf": "^0.11.4",
     "open-iconic": "^1.1.1",
     "popper.js": "^1.14.7",
     "request": "^2.88.2"
